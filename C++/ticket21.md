@@ -41,14 +41,14 @@
   * prvalue (как бы были раньше) — имени нет, сейчас помрёт, можно разрушить.
     * Литералы: `42`, `nullptr`
     * То, что возвращает по значению: `a + b`, `getVal()` (если `int getVal();`)
-    * Обращения к полям: `a.m` (где `a` — prvalue)
+    * Обращения к полям: `a.m` (где `a` — prvalue) (**примечание от читающих ночью (Юра): судя по [cpprefrence](https://en.cppreference.com/w/cpp/language/value_category), a.m, где a - prvalue, - это xvalue**)
     * `this` (именно сам указатель)
     * Лямбда
     * Свойства:
       * Не полиморфное, мы точно знаем тип.
   * xvalue — новая категория — имя есть, но можно разрушить.
     * То, что возвращает `T&&`: `static_cast<int&&>(x)`, `std::move(x)` (это просто `static_cast` внутри).
-    * Обращения к полям: `a.m` (тут `a` — xvalue).
+    * Обращения к полям: `a.m` (тут `a` — xvalue). (**примечание от читающих ночью (Юра): судя по [cpprefrence](https://en.cppreference.com/w/cpp/language/value_category), a.m, где a - prvalue, - это тоже xvalue**)
 * Смешанные категории:
   * glvalue — то, у чего есть имя. lvalue или xvalue.
   * rvalue — то, из чего можно мувать. prvalue или xvalue.
@@ -80,6 +80,10 @@ constexpr typename std::remove_reference<_Tp>::type&& move(_Tp&& __t) noexcept{
 
 Нельзя:
 * Использум объект не в последний раз
+* return std::move(x) -  так делать нельзя, выключается RVO. Но если x - unique_ptr, то до 17 плюсов нужно, а с 17 там copy-elision (с разбора 1 теста, который про мувы: (тест)[https://www.youtube.com/watch?v=7h-1R8L2cu4&list=PLxMpIvWUjaJuKqgCKqnaCSgn7fHSE2clf&index=20&t=0s]
+* auto x = std::move(foo()) - так делать нельзя, так как мувать из rvalue (справа именно оно) бессмысленно
 
 Нужно:
 * Для `unique_ptr` при передаче в функцию/конструктор/другую переменную
+
+Хорошие примеры можно взять из теста, (ссылка)[https://docs.google.com/forms/d/e/1FAIpQLSdw3gFQ3aUHfZDUD3BwjiG_L6sguoXCSbW47S2edDg42N9qkQ/viewform]
